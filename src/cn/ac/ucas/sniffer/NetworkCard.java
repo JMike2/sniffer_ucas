@@ -1,7 +1,4 @@
 package cn.ac.ucas.sniffer;
-
-import java.util.Scanner;
-
 import jpcap.JpcapCaptor;
 import jpcap.NetworkInterface;
 
@@ -14,7 +11,6 @@ public class NetworkCard {
 		}
 		
 	
-		
 		
 	
 }
