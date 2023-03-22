@@ -1,4 +1,5 @@
 package cn.ac.ucas.sniffer;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -6,8 +7,10 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.plaf.basic.DefaultMenuLayout;
 import javax.swing.table.DefaultTableModel;
 
 import cn.ac.ucas.*;
@@ -22,8 +25,10 @@ public class GUI extends JFrame{
 	JTextField  tf;
 	JTable table;
 	DefaultTableModel dt;
+	JScrollPane pane;
 	final String[] head = {"时间","源IP","目的IP","协议","长度"};
 	NetworkInterface[] devices;
+	Object[][] datalist;
 	//监听到指令后开始抓包
 	private class NetcardListener implements ActionListener{
 		NetworkInterface device;
@@ -66,6 +71,56 @@ public class GUI extends JFrame{
 				}
 			}
 		});
+		item2.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				//过滤器设置为UDP并将包列表清空
+				allpacket.setFilter("UDP");
+				allpacket.clearPacket();
+				//清空表defaulttable
+				while(dt.getColumnCount()>0) {
+					dt.removeRow(dt.getRowCount()-1);
+				}
+			}
+		});
+		item3.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				//过滤器设置为ICMP并将包列表清空
+				allpacket.setFilter("ICMP");
+				allpacket.clearPacket();
+				//清空表defaulttable
+				while(dt.getColumnCount()>0) {
+					dt.removeRow(dt.getRowCount()-1);
+				}
+			}
+		});
+		//将筛选协议菜单项加入菜单中
+		menu2.add(item1);
+		menu2.add(item2);
+		menu2.add(item3);
+		//将菜单加入菜单条中
+		menubar.add(menu1);
+		menubar.add(menu2);
+		setJMenuBar(menubar);
+		dt=new DefaultTableModel(datalist,head);
+		allpacket.setTable(dt);
+		table = new JTable(dt) {
+			//设置行列不可编辑
+			public boolean isCellEditable(int row,int cloumn) {
+				return false;
+			}
+		};
+		table.setPreferredScrollableViewportSize(new Dimension(600,50));//设置表格的大小
+		table.setRowHeight(30);
+		table.setRowMargin(5);
+		table.setShowGrid(true);
+		table.doLayout();
+		pane = new JScrollPane(table);
+		setContentPane(pane);
+		pack();
+		setVisible(true);
+	}
+	public static void main(String[] args) {
+		new GUI();
 	}
 	
 }

@@ -15,11 +15,14 @@ import cn.ac.ucas.sniffer.NetworkCard;
 //抓包线程
 public class PacketCapture implements Runnable{
 	NetworkInterface device;
-	static DefaultTableModel tablemodle;
+	static DefaultTableModel dt;
 	static String filter ="";
-	static ArrayList<Packet> PacketList ;
+	static ArrayList<Packet> PacketList =new ArrayList<>() ;
 	public PacketCapture() {
 		
+	}
+	public void setTable(DefaultTableModel dt) {
+		this.dt=dt;
 	}
 	public void setFilter(String filter) {
 		this.filter=filter;
@@ -35,7 +38,7 @@ public class PacketCapture implements Runnable{
 	}
 	//将抓到的包添加进表里
 	public static String[] getInfo(Packet packet) {
-		String[] data = new String[10];
+		String[] data = new String[6];
 		PacketAnalyze pa = new PacketAnalyze(packet);
 		if(packet!=null&&pa.Packet_in_Class().size()>=1) {
 			Date date= new Date();
@@ -50,7 +53,7 @@ public class PacketCapture implements Runnable{
 	}
 	//将抓到的包添加进表里
 	public void joinTable(Packet packet) {
-		tablemodle.addRow(getInfo(packet));
+		dt.addRow(getInfo(packet));
 	}
 	
 	public void run() {
@@ -65,10 +68,15 @@ public class PacketCapture implements Runnable{
 				long StartTime = System.currentTimeMillis();
 				while(StartTime+300>StartTime) {
 					packet=jpcap.getPacket();
-					PacketList.add(packet);				
+					PacketList.add(packet);	
+					joinTable(packet);
 				}
+				Thread.sleep(2000);
 			}
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
