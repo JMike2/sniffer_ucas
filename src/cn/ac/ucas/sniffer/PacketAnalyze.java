@@ -20,9 +20,9 @@ public class PacketAnalyze {
 		map=new HashMap<String,String>();
 		UDPPacket udppacket = (UDPPacket)packet;
 		map.put("协议", "UDP");
-		map.put("源IP", udppacket.src_ip.toString());//udp包的源IP地址
+		map.put("源IP", udppacket.src_ip.toString().substring(1, udppacket.src_ip.toString().length()));//udp包的源IP地址
 		map.put("源端口", String.valueOf(udppacket.src_port));//udp包的源端口
-		map.put("目的IP", udppacket.dst_ip.toString());//udp包的目的IP地址
+		map.put("目的IP", udppacket.dst_ip.toString().substring(1, udppacket.dst_ip.toString().length()));//udp包的目的IP地址
 		map.put("目的端口", String.valueOf(udppacket.dst_port));//udp包的目的端口
 		try {
 			map.put("数据", new String(udppacket.data,"gbk"));
@@ -53,8 +53,8 @@ public class PacketAnalyze {
 		map=new HashMap<String,String>();
 		ICMPPacket icmppacket = (ICMPPacket)packet;
 		map.put("协议", "ICMP");
-		map.put("源IP", icmppacket.src_ip.toString());//ICMP包的源IP地址
-		map.put("目的IP",icmppacket.dst_ip.toString());//ICMP包的目的IP地址
+		map.put("源IP", icmppacket.src_ip.toString().substring(1,icmppacket.src_ip.toString().length()));//ICMP包的源IP地址
+		map.put("目的IP",icmppacket.dst_ip.toString().substring(1,icmppacket.toString().length()));//ICMP包的目的IP地址
 		try {
 			map.put("数据", new String(icmppacket.data,"gbk"));
 		} catch (UnsupportedEncodingException e) {
