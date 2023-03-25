@@ -2,9 +2,13 @@ package cn.ac.ucas.sniffer;
 import cn.ac.ucas.sniffer.PacketAnalyze;
 import jpcap.JpcapCaptor;
 import jpcap.NetworkInterface;
+import jpcap.packet.ICMPPacket;
 import jpcap.packet.Packet;
+import jpcap.packet.TCPPacket;
+import jpcap.packet.UDPPacket;
 
 import java.io.IOException;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,69 +18,87 @@ import javax.swing.table.DefaultTableModel;
 import cn.ac.ucas.sniffer.NetworkCard;
 //抓包线程
 public class PacketCapture implements Runnable{
-	NetworkInterface device;
+	static NetworkInterface device;//要抓取的网卡
 	static DefaultTableModel dt;
-	static String filter ="";
-	static ArrayList<Packet> PacketList =new ArrayList<>() ;
+	static String filter = "";
+	static ArrayList<Packet> packetlist = new ArrayList<>(); 
+	static boolean action = true;
 	public PacketCapture() {
 		
 	}
-	public void setTable(DefaultTableModel dt) {
-		this.dt=dt;
+	public void setDevice(NetworkInterface device) {
+		this.device =device;
 	}
 	public void setFilter(String filter) {
-		this.filter=filter;
+		this.filter = filter;
 	}
-	public void setDivices(NetworkInterface device) {
-		this.device=device;
+	public void setTable(DefaultTableModel dt) {
+		this.dt = dt;
 	}
-	public static ArrayList<Packet> getpacketList(){
-		return PacketList;
+	public static void packetclear() {
+		packetlist.clear();
 	}
-	public void clearPacket() {
-		PacketList.clear();
+	public static ArrayList<Packet> getPacketList(){
+		return packetlist;
 	}
-	//将抓到的包添加进表里
 	public static String[] getInfo(Packet packet) {
 		String[] data = new String[6];
-		PacketAnalyze pa = new PacketAnalyze(packet);
-		if(packet!=null&&pa.Packet_in_Class().size()>=1) {
-			Date date= new Date();
-			SimpleDateFormat df = new SimpleDateFormat("hh:mm:ss");
-			data[0] = df.format(date);
-			data[1] = pa.Packet_in_Class().get("源IP");
-			data[2] = pa.Packet_in_Class().get("目的IP");
-			data[3] = pa.Packet_in_Class().get("协议");
-			data[4] = String.valueOf(packet.len);
+		Date date =new Date();
+		DateFormat df = new SimpleDateFormat("HH:mm:ss");
+		
+		//过滤空包
+		if(packet!=null&&new PacketAnalyze(packet).Packet_in_Class().size()>=3) {
+			data[0]=df.format(date);
+			data[1]=new PacketAnalyze(packet).Packet_in_Class().get("源IP");
+			data[2]=new PacketAnalyze(packet).Packet_in_Class().get("目的IP");
+			data[3]=new PacketAnalyze(packet).Packet_in_Class().get("协议");
+			data[4]=String.valueOf(packet.len);
 		}
+		
 		return data;
 	}
-	//将抓到的包添加进表里
-	public void joinTable(Packet packet) {
-		dt.addRow(getInfo(packet));
+	public static void joinTable(Packet packet) {
+		String[] rowdata = getInfo(packet);
+		if(rowdata.length>=4) {
+			dt.addRow(rowdata);
+		}
+		
 	}
-	
+	public static boolean testFilter(Packet packet) {
+		if(filter.contains("ICMP")) {
+			if(packet.getClass().equals(ICMPPacket.class)) return true;
+		}
+		if(filter.contains("TCP")) {
+			if(packet.getClass().equals(TCPPacket.class)) return true;
+		}
+		if(filter.contains("UDP")) {
+			if(packet.getClass().equals(UDPPacket.class)) return true;
+		}
+		if(filter.equals("")) {
+			return true;
+		}
+		return false;
+	}
 	public void run() {
 		Packet packet;
 		try {
 			//参数一:选择一个网卡，调用 JpcapCaptor.openDevice()连接，返回一个 JpcapCaptor类的对象 jpcap;
-	         // 参数二:提取该数据包中前65535个字节;
-	         // 参数三:设置为混杂模式；
+	         // 参数二:设置最大字节
+	         // 参数三:设置为非混杂模式,才可以使用下面的捕获过滤器方法;
 	         // 参数四:指定超时的时间;
-			JpcapCaptor jpcap = JpcapCaptor.openDevice(device, 65535, true, 20);
-			while(true) {
-				long StartTime = System.currentTimeMillis();
-				while(StartTime+300>StartTime) {
-					packet=jpcap.getPacket();
-					PacketList.add(packet);	
-					joinTable(packet);
+			JpcapCaptor jpcap = JpcapCaptor.openDevice(device, 65535, false, 20);
+			while(action) {
+				long time = System.currentTimeMillis();
+				if(time+600>=time) {
+					packet = jpcap.getPacket();
+					if(packet!=null&&testFilter(packet)) {
+						packetlist.add(packet);
+						joinTable(packet);
+					}
 				}
-				Thread.sleep(2000);
+				
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

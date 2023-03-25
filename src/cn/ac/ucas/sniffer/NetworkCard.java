@@ -5,7 +5,7 @@ import jpcap.NetworkInterface;
 public class NetworkCard {
 //获取网卡列表	
 	public static NetworkInterface[] getDevices() {
-		NetworkInterface[] devices=JpcapCaptor.getDeviceList();
+		NetworkInterface[] devices = JpcapCaptor.getDeviceList();
 		return devices;
-	}	
+	}
 }
