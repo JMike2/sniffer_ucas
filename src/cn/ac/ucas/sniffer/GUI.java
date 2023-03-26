@@ -31,6 +31,8 @@ import javax.swing.table.DefaultTableModel;
 
 import cn.ac.ucas.*;
 import jpcap.NetworkInterface;
+import jpcap.packet.ARPPacket;
+import jpcap.packet.IPPacket;
 import jpcap.packet.Packet;
 
 public class GUI extends JFrame{
@@ -38,13 +40,14 @@ public class GUI extends JFrame{
 	JMenuBar menubar;//菜单条
 	JMenu menu1,menu2;//菜单
 	JMenuItem[] item;//菜单项
-	JMenuItem item1,item2,item3;
-	JButton stop;
+	JMenuItem item1,item2,item3,item4,item5;
+	JButton stop,track;
 	JTable table;
 	DefaultTableModel dt;
 	JScrollPane pane;
 	JPanel panel;
 	JTextArea ta;
+	static String str,str1;
 	final String[] head = {"时间","源IP","目的IP","协议","长度"};
 	NetworkInterface[] devices;
 	Object[][] datalist;
@@ -79,6 +82,8 @@ public class GUI extends JFrame{
 		item1=new JMenuItem("TCP");
 		item2=new JMenuItem("UDP");
 		item3=new JMenuItem("ICMP");
+		item4=new JMenuItem("HTTP");
+		item5=new JMenuItem("TLS");
 		item1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				//过滤器设置为TCP并将包列表清空
@@ -112,6 +117,28 @@ public class GUI extends JFrame{
 				}
 			}
 		});
+		item4.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				//过滤器设置为ICMP并将包列表清空
+				allpacket.setFilter("HTTP");
+				allpacket.packetclear();
+				//清空表defaulttable
+				while(dt.getColumnCount()>0) {
+					dt.removeRow(dt.getRowCount()-1);
+				}
+			}
+		});
+		item5.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				//过滤器设置为ICMP并将包列表清空
+				allpacket.setFilter("TLS");
+				allpacket.packetclear();
+				//清空表defaulttable
+				while(dt.getColumnCount()>0) {
+					dt.removeRow(dt.getRowCount()-1);
+				}
+			}
+		});
 		stop = new JButton("开始/停止");
 		stop.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -123,15 +150,19 @@ public class GUI extends JFrame{
 				}
 			}
 		});
+
+		
 		//将筛选协议菜单项加入菜单中
 		menu2.add(item1);
 		menu2.add(item2);
 		menu2.add(item3);
+		menu2.add(item4);
+		menu2.add(item5);
 		//将菜单加入菜单条中
 		menubar.add(menu1);
 		menubar.add(menu2);
 		menubar.add(stop);
-		setJMenuBar(menubar);
+	
 		dt=new DefaultTableModel(datalist,head);
 		allpacket.setTable(dt);
 		table = new JTable(dt) {
@@ -152,6 +183,27 @@ public class GUI extends JFrame{
 		panel.setBackground(Color.black);  
 		panel.add(pane); 
 		add(panel,BorderLayout.WEST);
+		track = new JButton("追踪");
+		track.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO Auto-generated method stub
+				int  row = table.getSelectedRow();
+				if(row!=-1) {
+					 
+					str = (String)table.getValueAt(row, 1);
+					str1 = (String)table.getValueAt(row, 2);	
+					 allpacket.setFilter("key"+str+str1);
+					 allpacket.packetclear();
+						//清空表defaulttable
+						while(dt.getColumnCount()>0) {
+							dt.removeRow(dt.getRowCount()-1);
+						}
+					
+				}
+			}
+		});
 		ta=new JTextArea(40,40);
 		ta.setEditable(false);//不可编辑
 		ta.setLineWrap(true);//满一行自动换行
@@ -165,28 +217,30 @@ public class GUI extends JFrame{
 					ta.setText(null);
 					int row = table.getSelectedRow();
 					ArrayList<Packet> packetlist = allpacket.getPacketList();
-					System.out.println("1");
 					Map<String,String> m1 = new HashMap<String,String>();
 					Map<String,String> m2 = new HashMap<String,String>();
 					Packet packet = packetlist.get(row);
-					ta.append("********************************************"+"\n");
-					ta.append("***************IP头信息*********************"+"\n");
-					ta.append("********************************************"+"\n");
-					m1=new PacketAnalyze(packet).IPAnalyze();
-					for(Map.Entry<String,String>me1:m1.entrySet()) {
-						ta.append(me1.getKey()+":"+me1.getValue()+"\n");
-					}
-					m2=new PacketAnalyze(packet).Packet_in_Class();
-					ta.append("********************************************"+"\n");
-					ta.append("***************"+m2.get("协议")+"报头"+"************"+"\n");
-					ta.append("*********************************************"+"\n");
-					for(Map.Entry<String, String>me2:m2.entrySet()) {
-						ta.append(me2.getKey()+":"+me2.getValue()+"\n");
-					}
+					
+						ta.append("***********************************************************"+"\n");
+						ta.append("**********************IP头信息***************************"+"\n");
+						ta.append("***********************************************************"+"\n");
+						m1=new PacketAnalyze(packet).IPAnalyze();
+						for(Map.Entry<String,String>me1:m1.entrySet()) {
+							ta.append(me1.getKey()+":"+me1.getValue()+"\n");
+						}
+						m2=new PacketAnalyze(packet).Packet_in_Class();
+						ta.append("***********************************************************"+"\n");
+						ta.append("***************"+m2.get("协议")+"报头"+"**********************************"+"\n");
+						ta.append("***********************************************************"+"\n");
+						for(Map.Entry<String, String>me2:m2.entrySet()) {
+							ta.append(me2.getKey()+":"+me2.getValue()+"\n");
+						}					
 				}
 			}
 		});
 		
+		menubar.add(track);
+		setJMenuBar(menubar);
 		pack();
 		setVisible(true);
 		addWindowListener(new WindowAdapter() {  
